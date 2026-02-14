@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Omniversal Singularity | Portfolio</title>
+  <meta name="description" content="A transcendent 3D portfolio experience">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script>
+    document.addEventListener('mousemove', (e) => {
+      const cursor = document.getElementById('cursor');
+      if (cursor) {
+        cursor.style.left = e.clientX - 10 + 'px';
+        cursor.style.top = e.clientY - 10 + 'px';
+      }
+    });
+  </script>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>
