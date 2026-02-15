@@ -13,6 +13,8 @@ export default function BlackHole() {
         return new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
+                diffuse: { value: new THREE.Color(0xffffff) },
+                opacity: { value: 1.0 }
             },
             vertexShader: `
         varying vec2 vUv;
@@ -55,6 +57,8 @@ export default function BlackHole() {
             transparent: true,
             side: THREE.DoubleSide,
             blending: THREE.AdditiveBlending,
+            fog: false,
+            lights: false
         })
     }, [])
 
@@ -63,7 +67,9 @@ export default function BlackHole() {
         return new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
-                color: { value: new THREE.Color('#ff8833') }
+                color: { value: new THREE.Color('#ff8833') },
+                diffuse: { value: new THREE.Color(0xffffff) },
+                opacity: { value: 1.0 }
             },
             vertexShader: `
         varying vec2 vUv;
@@ -93,6 +99,8 @@ export default function BlackHole() {
             transparent: true,
             side: THREE.BackSide,
             blending: THREE.AdditiveBlending,
+            fog: false,
+            lights: false
         })
     }, [])
 
@@ -130,7 +138,7 @@ export default function BlackHole() {
             <group ref={accretionDiskRef}>
                 <mesh rotation={[Math.PI / 2.1, 0, 0]}>
                     <ringGeometry args={[2.3, 14, 128]} />
-                    <primitive object={accretionMaterial} attach="material" />
+                    <primitive object={accretionMaterial} />
                 </mesh>
 
                 {/* Glowing Dust Layer */}
@@ -149,7 +157,7 @@ export default function BlackHole() {
             {/* 4. Gravitational Lensing Bubble */}
             <mesh ref={lensingRef}>
                 <sphereGeometry args={[7, 64, 64]} />
-                <primitive object={lensingMaterial} attach="material" />
+                <primitive object={lensingMaterial} />
             </mesh>
 
             {/* 5. Volumetric Glow Halos */}

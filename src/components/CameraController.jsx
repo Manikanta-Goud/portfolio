@@ -26,7 +26,7 @@ export default function CameraController({ activeGalaxy, onTransitionComplete })
     const cameraPositions = {
         main: new Vector3(30, 35, 40),
         nebula: new Vector3(-70, 20, -50),
-        quantum: new Vector3(80, -10, 120),
+        quantum: new Vector3(80, -10, 120), // Updated to better view
         void: new Vector3(-60, 60, -100)
     }
 
@@ -123,7 +123,9 @@ export default function CameraController({ activeGalaxy, onTransitionComplete })
             transparent: true,
             side: THREE.DoubleSide,
             blending: THREE.AdditiveBlending,
-            depthWrite: false
+            depthWrite: false,
+            fog: false,
+            lights: false
         })
     }, [])
 
@@ -267,7 +269,7 @@ export default function CameraController({ activeGalaxy, onTransitionComplete })
 
                     <mesh position={[0, 0, -50]}>
                         <cylinderGeometry args={[100, 100, 200, 64, 1, true]} rotation={[Math.PI / 2, 0, 0]} />
-                        <primitive object={warpShaderMaterial} attach="material" />
+                        <primitive object={warpShaderMaterial} />
                     </mesh>
                 </group>
             )}

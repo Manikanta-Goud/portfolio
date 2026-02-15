@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Experience from './components/Experience'
 import ContentPanel from './components/ContentPanel'
 import Tutorial from './components/Tutorial'
 import SpaceshipTransition from './components/SpaceshipTransition'
 import Intro from './components/Intro'
 import { motion, AnimatePresence } from 'framer-motion'
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react'
+import { PortfolioDatabase } from './lib/database.js'
 
 function App() {
     const [loading, setLoading] = useState(true)
@@ -16,8 +18,26 @@ function App() {
     const [visitedGalaxies, setVisitedGalaxies] = useState(['main'])
     const [visitedCrystals, setVisitedCrystals] = useState([])
     const [soundEnabled, setSoundEnabled] = useState(true)
-    const [showTutorial, setShowTutorial] = useState(true)
-    const [showIntro, setShowIntro] = useState(true)
+    const [showTutorial, setShowTutorial] = useState(false)
+    const [showIntro, setShowIntro] = useState(false)
+    const [showAuth, setShowAuth] = useState(true)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+    // Clerk user hook
+    const { isSignedIn, user } = useUser()
+
+    // Auto-proceed when user signs in
+    useEffect(() => {
+        if (isSignedIn && user && showAuth) {
+            // Save user profile to Supabase on login
+            PortfolioDatabase.saveUserProfile(user)
+            
+            // Start intro after successful auth
+            setShowAuth(false)
+            setIsAuthenticated(true)
+            setShowIntro(true)
+        }
+    }, [isSignedIn, user, showAuth])
 
     // Sound refs
     const clickSound = useRef(null)
@@ -29,6 +49,8 @@ function App() {
         // Initialize sounds
         clickSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGS57OihUBELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBQ==')
         hoverSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGS57OihUBELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBQ==')
+        warpSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGS57OihUBELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBQ==')
+        ambientSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGS57OihUBELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBSh+zPLaizsKFGO56+mjUxELTKXh8bllHgU2jdXvz3wqBQ==')
 
         const loaderTimer = setTimeout(() => setLoading(false), 3000)
         const canvasTimer = setTimeout(() => setShowCanvas(true), 1000)
@@ -47,9 +69,9 @@ function App() {
         }
     }
 
-    const handleGalaxyNavClick = (galaxy) => {
-        if (galaxy !== activeGalaxy) {
-            playSound(warpSound) // Transition sound
+    const handleGalaxyNavClick = useCallback((galaxy) => {
+        if (galaxy !== activeGalaxy && !transitioning) {
+            playSound(warpSound)
             setTransitioning(true)
             setActiveGalaxy(galaxy)
             setShowGalaxyMenu(false)
@@ -58,40 +80,117 @@ function App() {
                 setVisitedGalaxies([...visitedGalaxies, galaxy])
             }
 
+            // Track galaxy visit in database
+            if (user?.id) {
+                PortfolioDatabase.trackInteraction(user.id, 'galaxy_visit', { 
+                    galaxy: galaxy,
+                    timestamp: new Date().toISOString()
+                })
+            }
+
             setTimeout(() => setTransitioning(false), 5000)
         }
-    }
+    }, [activeGalaxy, transitioning, visitedGalaxies, user, warpSound])
 
-    const handleCrystalClick = (crystalId) => {
-        playSound(warpSound) // Unified Transition sound instead of 'tuk tuk' (clickSound)
-        setActiveCrystal(crystalId)
+    const handleCrystalClick = useCallback((crystalId) => {
+        if (crystalId && crystalId !== activeCrystal) {
+            // Check if sound exists before playing to avoid potential null pointer in some browsers
+            if (warpSound && warpSound.current) {
+                playSound(warpSound)
+            }
+            setActiveCrystal(crystalId)
 
-        if (!visitedCrystals.includes(crystalId)) {
-            setVisitedCrystals([...visitedCrystals, crystalId])
+            if (!visitedCrystals.includes(crystalId)) {
+                setVisitedCrystals([...visitedCrystals, crystalId])
+            }
+
+            // Track crystal interaction in database
+            if (user?.id) {
+                PortfolioDatabase.trackInteraction(user.id, 'crystal_click', { 
+                    crystal: crystalId,
+                    galaxy: activeGalaxy,
+                    timestamp: new Date().toISOString()
+                })
+            }
         }
-    }
+    }, [activeCrystal, visitedCrystals, user, activeGalaxy, warpSound])
 
     const galaxies = [
-        { id: 'main', icon: '🌟', name: 'Main Galaxy' },
-        { id: 'nebula', icon: '🟣', name: 'Nebula Sector' },
-        { id: 'quantum', icon: '🔵', name: 'Quantum Realm' },
-        { id: 'void', icon: '🔴', name: 'Void Dimension' }
+        { id: 'main', icon: '🌟', name: 'IDENTITY CORE' },
+        { id: 'nebula', icon: '🟣', name: 'INTELLECTUAL HUB' },
+        { id: 'quantum', icon: '🔵', name: 'INNOVATION LAB' },
+        { id: 'void', icon: '🔴', name: 'DEV REPOSITORY' }
     ]
+
+    // Check if Clerk is configured
+    const isClerkConfigured = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && 
+                              import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== 'your_publishable_key_here'
+
+    // Handle intro completion - go to tutorial
+    const handleIntroComplete = () => {
+        setShowIntro(false)
+        setShowTutorial(true)
+        setShowCanvas(true)
+    }
+
+    // Handle tutorial completion
+    const handleTutorialComplete = () => {
+        setShowTutorial(false)
+    }
 
     return (
         <div className="portfolio-root">
-            {/* Intro Sequence */}
+            {/* Clerk Authentication Screen - First and Simple */}
             <AnimatePresence>
-                {showIntro && (
+                {showAuth && isClerkConfigured && (
+                    <div className="simple-auth-overlay">
+                        <div className="simple-auth-content">
+                            <h1 className="simple-auth-title">Welcome</h1>
+                            <p className="simple-auth-subtitle">Please sign in to continue</p>
+                            <div className="simple-auth-buttons">
+                                <SignedOut>
+                                    <SignInButton 
+                                        mode="modal"
+                                        redirectUrl={window.location.href}
+                                        signUpUrl={undefined}
+                                        forceRedirectUrl={window.location.href}
+                                    >
+                                        <button className="simple-auth-btn">Sign In</button>
+                                    </SignInButton>
+                                </SignedOut>
+                                <SignedIn>
+                                    <div className="auth-loading">
+                                        <div>Authenticated ✓</div>
+                                        <div>Loading experience...</div>
+                                    </div>
+                                </SignedIn>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* User Profile (only show after auth and not during intro/tutorial) */}
+            {!showAuth && !showIntro && !showTutorial && isAuthenticated && isClerkConfigured && (
+                <div className="auth-container">
+                    <SignedIn>
+                        <UserButton afterSignOutUrl="/" />
+                    </SignedIn>
+                </div>
+            )}
+
+            {/* Intro Sequence - After Auth */}
+            <AnimatePresence>
+                {showIntro && isAuthenticated && (
                     <Intro
                         imagePath="/portrait.jpg"
-                        onStart={() => setShowIntro(false)}
+                        onStart={handleIntroComplete}
                     />
                 )}
             </AnimatePresence>
 
-            {/* Tutorial */}
-            {showTutorial && !showIntro && <Tutorial onComplete={() => setShowTutorial(false)} />}
+            {/* Tutorial - After Intro */}
+            {showTutorial && !showIntro && <Tutorial onComplete={handleTutorialComplete} />}
 
             {/* Loading Screen */}
             <AnimatePresence>
@@ -106,8 +205,8 @@ function App() {
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ delay: 0.5, duration: 1 }}
                         >
-                            <h1 className="loader-title">THE OMNIVERSAL SINGULARITY</h1>
-                            <p className="loader-subtitle">INITIALIZING SPACETIME</p>
+                            <h1 className="loader-title">MANIKANTA GOUD'S OMNIVERSE</h1>
+                            <p className="loader-subtitle">SYNCHRONIZING PORTFOLIO CORES</p>
                         </motion.div>
                     </motion.div>
                 )}
@@ -117,7 +216,7 @@ function App() {
             {!showIntro && (
                 <SpaceshipTransition
                     isActive={transitioning}
-                    destinationGalaxy={activeGalaxy}
+                    destinationGalaxy={galaxies.find(g => g.id === activeGalaxy)?.name || activeGalaxy}
                     onComplete={() => { }}
                 />
             )}
@@ -133,17 +232,21 @@ function App() {
                     <Experience
                         activeGalaxy={activeGalaxy}
                         onCrystalClick={handleCrystalClick}
+                        onGalaxyChange={handleGalaxyNavClick}
                     />
                 </motion.div>
             )}
 
             {/* Content Panel */}
-            {activeCrystal && (
-                <ContentPanel
-                    crystal={activeCrystal}
-                    onClose={() => setActiveCrystal(null)}
-                />
-            )}
+            <AnimatePresence>
+                {activeCrystal && (
+                    <ContentPanel
+                        key="content-panel"
+                        crystal={activeCrystal}
+                        onClose={() => setActiveCrystal(null)}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Title */}
             {!showIntro && (
@@ -153,8 +256,8 @@ function App() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.5, duration: 1 }}
                 >
-                    <h1 className="main-title">IDENTITY</h1>
-                    <p className="sub-title">FULL STACK ARCHITECT | DIMENSION WEAVER</p>
+                    <h1 className="main-title">BODIGE MANIKANTA GOUD</h1>
+                    <p className="sub-title">FULL STACK DEVELOPER | INNOVATION SEEKER</p>
                 </motion.div>
             )}
 
@@ -166,10 +269,10 @@ function App() {
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.8, duration: 1 }}
                 >
-                    <img src="/portrait.jpg" alt="Architect" className="profile-img" />
+                    <img src="/portrait.jpg" alt="Manikanta Goud" className="profile-img" />
                     <div className="profile-info">
-                        <span className="profile-name">ARCHITECT</span>
-                        <div className="profile-subtitle">DIMENSION WEAVER</div>
+                        <span className="profile-name">MANIKANTA GOUD</span>
+                        <div className="profile-subtitle">FULL STACK DEVELOPER</div>
                         <div className="pulse-indicator"></div>
                     </div>
                 </motion.div>

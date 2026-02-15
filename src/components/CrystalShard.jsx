@@ -77,10 +77,6 @@ export default function CrystalShard({ radius, speed, phase, offsetZ, title, ima
     return (
         <group
             ref={groupRef}
-            onClick={(e) => {
-                e.stopPropagation()
-                if (onClick) onClick(id)
-            }}
             onPointerOver={(e) => {
                 e.stopPropagation()
                 setHovered(true)
@@ -113,7 +109,10 @@ export default function CrystalShard({ radius, speed, phase, offsetZ, title, ima
                 >
                     <group ref={shardRef}>
                         {/* Main Central Core */}
-                        <mesh scale={hovered ? 0.6 : 1.3}>
+                        <mesh scale={hovered ? 0.6 : 1.3} onClick={(e) => {
+                            e.stopPropagation()
+                            if (onClick) onClick(id)
+                        }}>
                             <icosahedronGeometry args={[0.8, 0]} />
                             <meshPhysicalMaterial
                                 color={color}
@@ -165,42 +164,83 @@ export default function CrystalShard({ radius, speed, phase, offsetZ, title, ima
 
             </Float>
 
-            {/* FLOATING LABEL - Always visible above crystal */}
-            <group position={[0, 6, 0]} ref={labelRef}>
-                <mesh position={[0, -3, 0]}>
-                    <cylinderGeometry args={[0.08, 0.08, 6, 16]} />
-                    <meshBasicMaterial color={color} transparent opacity={hovered ? 1 : 0.8} />
+            {/* POLE AND LABEL - Always visible above crystal */}
+            <group position={[0, 10, 0]} ref={labelRef}>
+                {/* Hitbox for the pole - much wider than the visual pole */}
+                <mesh position={[0, -5, 0]} visible={false} onClick={(e) => {
+                    e.stopPropagation()
+                    if (onClick) onClick(id)
+                }}>
+                    <cylinderGeometry args={[0.5, 0.5, 10, 8]} />
+                    <meshBasicMaterial transparent opacity={0} />
                 </mesh>
 
-                <mesh position={[0, 0, 0]}>
-                    <sphereGeometry args={[0.15, 16, 16]} />
-                    <meshBasicMaterial color={color} />
+                {/* Visual Pole */}
+                <mesh position={[0, -5, 0]}>
+                    <cylinderGeometry args={[0.06, 0.12, 10, 16]} />
+                    <meshStandardMaterial
+                        color={color}
+                        emissive={color}
+                        emissiveIntensity={hovered ? 2 : 0.5}
+                        transparent
+                        opacity={hovered ? 1 : 0.6}
+                    />
                 </mesh>
 
-                <mesh position={[0, 0.6, 0]}>
-                    <planeGeometry args={[title.length * 0.25 + 0.8, 0.7]} />
-                    <meshBasicMaterial color="#000000" transparent opacity={0.85} />
+                {/* Connection Sphere at the end of the pole */}
+                <mesh position={[0, 0, 0]} onClick={(e) => {
+                    e.stopPropagation()
+                    if (onClick) onClick(id)
+                }}>
+                    <sphereGeometry args={[0.25, 16, 16]} />
+                    <meshStandardMaterial
+                        color={color}
+                        emissive={color}
+                        emissiveIntensity={hovered ? 5 : 1}
+                    />
                 </mesh>
 
+                {/* Label Box / Background */}
+                <mesh position={[0, 1, 0]} onClick={(e) => {
+                    e.stopPropagation()
+                    if (onClick) onClick(id)
+                }}>
+                    <planeGeometry args={[title.length * 0.25 + 1, 0.9]} />
+                    <meshBasicMaterial color="#000000" transparent opacity={0.9} />
+                </mesh>
+
+                {/* Glowing border for Label */}
                 {hovered && (
-                    <mesh position={[0, 0.6, 0.005]}>
-                        <planeGeometry args={[title.length * 0.25 + 0.9, 0.8]} />
-                        <meshBasicMaterial color={color} transparent opacity={0.5} />
+                    <mesh position={[0, 1, -0.01]}>
+                        <planeGeometry args={[title.length * 0.25 + 1.1, 1.0]} />
+                        <meshBasicMaterial color={color} transparent opacity={0.6} />
                     </mesh>
                 )}
 
                 <Text
-                    position={[0, 0.6, 0.01]}
-                    fontSize={0.35}
+                    position={[0, 1, 0.05]}
+                    fontSize={0.4}
                     color={hovered ? color : '#ffffff'}
                     anchorX="center"
                     anchorY="middle"
-                    outlineWidth={0.02}
+                    outlineWidth={0.03}
                     outlineColor="#000000"
                     fontWeight="bold"
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        if (onClick) onClick(id)
+                    }}
                 >
                     {title}
                 </Text>
+
+                {/* Decorative scanning line on label when hovered */}
+                {hovered && (
+                    <mesh position={[0, 1, 0.06]}>
+                        <planeGeometry args={[title.length * 0.25 + 0.8, 0.03]} />
+                        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={10} />
+                    </mesh>
+                )}
             </group>
         </group>
     )

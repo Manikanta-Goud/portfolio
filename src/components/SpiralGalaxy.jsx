@@ -5,7 +5,7 @@ import * as THREE from 'three'
 export default function SpiralGalaxy() {
     const particlesRef = useRef()
 
-    const { positions, colors, sizes } = useMemo(() => {
+    const { positions, colors, sizes, asteroidTexture } = useMemo(() => {
         const count = 15000 // HUGE amount of particles
         const positions = new Float32Array(count * 3)
         const colors = new Float32Array(count * 3)
@@ -73,7 +73,8 @@ export default function SpiralGalaxy() {
             sizes[i] = Math.random() * 3 + 0.3
         }
 
-        return { positions, colors, sizes }
+        const asteroidTexture = createAsteroidTexture()
+        return { positions, colors, sizes, asteroidTexture }
     }, [])
 
     useFrame((state) => {
@@ -113,7 +114,7 @@ export default function SpiralGalaxy() {
                 blending={THREE.AdditiveBlending}
                 transparent={true}
                 opacity={0.9}
-                map={createAsteroidTexture()}
+                map={asteroidTexture}
             />
         </points>
     )
