@@ -28,8 +28,8 @@
     X-Content-Type-Options = "nosniff"
     # Enable HSTS
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
-    # Content Security Policy - Updated to allow Google Fonts
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.accounts.dev https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://clerk.accounts.dev https://*.clerk.accounts.dev"
+    # Content Security Policy - Updated to allow Google Fonts, Audio, and Web Workers
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.accounts.dev https://*.clerk.accounts.dev; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' data: blob:; img-src 'self' data: https: blob:; connect-src 'self' https://clerk.accounts.dev https://*.clerk.accounts.dev"
 
 # Cache static assets for better performance
 [[headers]]
