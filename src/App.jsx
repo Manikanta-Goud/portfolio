@@ -22,8 +22,23 @@ function App() {
     const [showAuth, setShowAuth] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-    // Clerk user hook
-    const { isSignedIn, user } = useUser()
+    // Clerk user hook - safely handle missing configuration
+    const isClerkConfigured = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && 
+                             import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== ''
+    
+    let isSignedIn = false
+    let user = null
+    
+    try {
+        const clerkUser = useUser()
+        if (isClerkConfigured && clerkUser) {
+            isSignedIn = clerkUser.isSignedIn
+            user = clerkUser.user
+        }
+    } catch (error) {
+        // Clerk not configured properly, use defaults
+        console.log('ℹ️ Clerk not configured - authentication disabled')
+    }
 
     // Auto-proceed when user signs in
     useEffect(() => {
@@ -101,9 +116,15 @@ function App() {
         { id: 'void', icon: '🔴', name: 'DEV REPOSITORY' }
     ]
 
-    // Check if Clerk is configured
-    const isClerkConfigured = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && 
-                              import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== 'your_publishable_key_here'
+    // Auto-proceed if no auth required
+    useEffect(() => {
+        if (!isClerkConfigured && showAuth) {
+            // Skip auth when Clerk isn't configured
+            setShowAuth(false)
+            setIsAuthenticated(true)
+            setShowIntro(true)
+        }
+    }, [isClerkConfigured, showAuth])
 
     // Handle intro completion - go to tutorial
     const handleIntroComplete = () => {
