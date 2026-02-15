@@ -22,22 +22,23 @@ function App() {
     const [showAuth, setShowAuth] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-    // Clerk user hook - safely handle missing configuration
+    // Clerk configuration check
     const isClerkConfigured = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && 
                              import.meta.env.VITE_CLERK_PUBLISHABLE_KEY !== ''
     
+    // Clerk user hook - safely handle missing configuration
     let isSignedIn = false
     let user = null
     
-    try {
-        const clerkUser = useUser()
-        if (isClerkConfigured && clerkUser) {
-            isSignedIn = clerkUser.isSignedIn
+    if (isClerkConfigured) {
+        try {
+            const clerkUser = useUser()
+            isSignedIn = clerkUser.isSignedIn || false
             user = clerkUser.user
+        } catch (error) {
+            // Clerk hook failed, use defaults
+            console.warn('Clerk hook failed:', error.message)
         }
-    } catch (error) {
-        // Clerk not configured properly, use defaults
-        console.log('ℹ️ Clerk not configured - authentication disabled')
     }
 
     // Auto-proceed when user signs in
