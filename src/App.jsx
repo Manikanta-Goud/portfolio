@@ -6,7 +6,6 @@ import SpaceshipTransition from './components/SpaceshipTransition'
 import Intro from './components/Intro'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react'
-import { PortfolioDatabase } from './lib/database.js'
 
 function App() {
     const [loading, setLoading] = useState(true)
@@ -29,9 +28,6 @@ function App() {
     // Auto-proceed when user signs in
     useEffect(() => {
         if (isSignedIn && user && showAuth) {
-            // Save user profile to Supabase on login
-            PortfolioDatabase.saveUserProfile(user)
-            
             // Start intro after successful auth
             setShowAuth(false)
             setIsAuthenticated(true)
@@ -80,14 +76,6 @@ function App() {
                 setVisitedGalaxies([...visitedGalaxies, galaxy])
             }
 
-            // Track galaxy visit in database
-            if (user?.id) {
-                PortfolioDatabase.trackInteraction(user.id, 'galaxy_visit', { 
-                    galaxy: galaxy,
-                    timestamp: new Date().toISOString()
-                })
-            }
-
             setTimeout(() => setTransitioning(false), 5000)
         }
     }, [activeGalaxy, transitioning, visitedGalaxies, user, warpSound])
@@ -102,15 +90,6 @@ function App() {
 
             if (!visitedCrystals.includes(crystalId)) {
                 setVisitedCrystals([...visitedCrystals, crystalId])
-            }
-
-            // Track crystal interaction in database
-            if (user?.id) {
-                PortfolioDatabase.trackInteraction(user.id, 'crystal_click', { 
-                    crystal: crystalId,
-                    galaxy: activeGalaxy,
-                    timestamp: new Date().toISOString()
-                })
             }
         }
     }, [activeCrystal, visitedCrystals, user, activeGalaxy, warpSound])

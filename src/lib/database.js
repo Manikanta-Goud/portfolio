@@ -5,7 +5,7 @@ export class PortfolioDatabase {
     
     // Save or update user profile from Clerk authentication
     static async saveUserProfile(clerkUser) {
-        if (!isSupabaseConfigured() || !clerkUser) return null
+        if (!isSupabaseConfigured() || !supabase || !clerkUser) return null
         
         try {
             const userData = {
@@ -43,7 +43,7 @@ export class PortfolioDatabase {
 
     // Get user profile by ID
     static async getUserProfile(userId) {
-        if (!isSupabaseConfigured() || !userId) return null
+        if (!isSupabaseConfigured() || !supabase || !userId) return null
         
         try {
             const { data, error } = await supabase
@@ -62,7 +62,7 @@ export class PortfolioDatabase {
     
     // Track user interactions (crystal clicks, galaxy visits, etc.)
     static async trackInteraction(userId, action, data = {}) {
-        if (!isSupabaseConfigured()) return null
+        if (!isSupabaseConfigured() || !supabase) return null
         
         try {
             const { data: result, error } = await supabase
@@ -84,7 +84,7 @@ export class PortfolioDatabase {
 
     // Save contact form submissions
     static async submitContactForm(formData) {
-        if (!isSupabaseConfigured()) return null
+        if (!isSupabaseConfigured() || !supabase) return null
         
         try {
             const { data: result, error } = await supabase
@@ -106,7 +106,7 @@ export class PortfolioDatabase {
 
     // Helper function to increment portfolio stats
     static async incrementPortfolioStat(metricName) {
-        if (!isSupabaseConfigured()) return null
+        if (!isSupabaseConfigured() || !supabase) return null
         
         try {
             const { error } = await supabase.rpc('increment_metric', {
